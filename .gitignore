@@ -1,5 +1,7 @@
 .devenv
 .direnv
+.cache*
+.env
 build/
 compile_commands.json
 qt-unified-linux-x64*
