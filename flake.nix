@@ -1,7 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
-    nix-alien.url = "github:thiagokokada/nix-alien";
     devenv.url = "github:cachix/devenv";
   };
 
@@ -10,11 +9,10 @@
     extra-substituters = "https://devenv.cachix.org";
   };
 
-  outputs = { self, nixpkgs, nix-alien, devenv, ... } @ inputs:
+  outputs = { self, nixpkgs, devenv, ... } @ inputs:
   let
     pkgs = nixpkgs.legacyPackages.x86_64-linux;
     llvm = pkgs.llvmPackages_latest;
-    lib = nixpkgs.lib;
   in {
     devShell.x86_64-linux = devenv.lib.mkShell {
       inherit inputs pkgs;
@@ -32,17 +30,20 @@
             pkgs.clang-tools
             llvm.clang
           ];
-          
-          env.QT_DIR = "/home/przemek/Qt";
+
+          dotenv.enable = true;
           env.QT_INSTALLER = "qt-unified-linux-x64-4.6.1-online.run";
 
           enterShell = ''
+            if [ -z "$QT_EMAIL" -o -z "$QT_PASS" -o -z "$QT_DIR" ]; then
+              echo "Please set QT_* environment variables"
+              exit 1
+            fi
             if [ ! -f $QT_INSTALLER ]; then
               wget https://d13lb3tujbc8s0.cloudfront.net/onlineinstallers/$QT_INSTALLER
               chmod +x $QT_INSTALLER
             fi
             if [ ! -d $QT_DIR ]; then
-            echo pass: $QT_PASS
               nix run \
                   --impure github:guibou/nixGL \
                   --override-input nixpkgs nixpkgs/nixos-unstable \
