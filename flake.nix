@@ -28,8 +28,9 @@
             pkgs.zlib
             pkgs.glib
             pkgs.libglibutil
-            llvm.lldb
             pkgs.clang-tools
+            pkgs.boost
+            llvm.lldb
             llvm.clang
           ];
 
@@ -43,22 +44,18 @@
             function download_cvb {
               echo $CVB_URL
               echo "Downloading CVB"
-              wget $CVB_URL
+              wget $CVB_URL -P cvb
             }
             
             function install_cvb {
               echo "unzip CVB"
-              unzip cvb-$CVB_VERSION-$CVB_ARCH.zip -d cvb
-              # dpkg -x cvb/cvb-tools-dev-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked
-              # dpkg -x cvb/cvb-tools-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked
+              unzip cvb/cvb-$CVB_VERSION-$CVB_ARCH.zip -d cvb
               dpkg -x cvb/cvb-camerasuite-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked/
               dpkg -x cvb/cvb-camerasuite-dev-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked/
             }
 
-            if [ ! -f cvb-$CVB_VERSION-$CVB_ARCH.zip ]; then
+            if [ ! -f cvb/cvb-$CVB_VERSION-$CVB_ARCH.zip ]; then
               download_cvb
-            fi
-            if [ ! -d $PWD/cvb/unpacked ]; then
               install_cvb
             fi
             export LD_LIBRARY_PATH="$PWD/cvb/unpacked/opt/cvb-$CVB_VERSION/lib/:$LD_LIBRARY_PATH"
