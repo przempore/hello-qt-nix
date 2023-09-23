@@ -19,6 +19,8 @@
       modules = [
         ({ pkgs, ... }: {
           packages = [
+            pkgs.unzip
+            pkgs.dpkg
             pkgs.cmake
             pkgs.ninja
             pkgs.gdb
@@ -33,8 +35,34 @@
 
           dotenv.enable = true;
           env.QT_INSTALLER = "qt-unified-linux-x64-4.6.1-online.run";
+          env.CVB_VERSION = "14.00.006";
+          env.CVB_ARCH = "ubu2004-x86_64";
+          env.CVB_URL = "https://ftp.commonvisionblox.com/webdavs/forum/setups/cvb/linux-x86_64/cvb-14.00.006-ubu2004-x86_64.zip";
 
           enterShell = ''
+            function download_cvb {
+              echo $CVB_URL
+              echo "Downloading CVB"
+              wget $CVB_URL
+            }
+            
+            function install_cvb {
+              echo "unzip CVB"
+              unzip cvb-$CVB_VERSION-$CVB_ARCH.zip -d cvb
+              # dpkg -x cvb/cvb-tools-dev-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked
+              # dpkg -x cvb/cvb-tools-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked
+              dpkg -x cvb/cvb-camerasuite-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked/
+              dpkg -x cvb/cvb-camerasuite-dev-$CVB_VERSION-$CVB_ARCH.deb cvb/unpacked/
+            }
+
+            if [ ! -f cvb-$CVB_VERSION-$CVB_ARCH.zip ]; then
+              download_cvb
+            fi
+            if [ ! -d $PWD/cvb/unpacked ]; then
+              install_cvb
+            fi
+            export LD_LIBRARY_PATH="$PWD/cvb/unpacked/opt/cvb-$CVB_VERSION/lib/:$LD_LIBRARY_PATH"
+
             if [ -z "$QT_EMAIL" -o -z "$QT_PASS" -o -z "$QT_DIR" ]; then
               echo "Please set QT_* environment variables"
               exit 1
