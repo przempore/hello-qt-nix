@@ -27,7 +27,6 @@
         export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$cvb/lib/"
       '';
       buildPhase = ''
-        echo "-------- tutaj --------"
         echo $LD_LIBRARY_PATH
         tree
       '';
