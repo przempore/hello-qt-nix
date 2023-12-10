@@ -6,10 +6,9 @@
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nix-alien.url = "github:thiagokokada/nix-alien";
-    qt_ld.url = "./qt_ld";
   };
 
-  outputs = { self, nixpkgs, flake-utils, nix-alien, qt_ld, ... }: 
+  outputs = { self, nixpkgs, flake-utils, nix-alien, ... }: 
     flake-utils.lib.eachDefaultSystem (system: 
       let
         pkgs = import nixpkgs { inherit system; };
@@ -36,6 +35,11 @@
           xorg.xcbutilwm.out
           xz.out
         ];
+        # install_qt = pkgs.writeShellScriptBin "install_qt.run" ''
+        #   export NIX_LD_LIBRARY_PATH='${NIX_LD_LIBRARY_PATH}'${"\${NIX_LD_LIBRARY_PATH:+':'}$NIX_LD_LIBRARY_PATH"}
+        #   export NIX_LD="$(cat ${stdenv.cc}/nix-support/dynamic-linker)"
+        #   /nix/store/vbyswf67a5qb9zf0pc1ihb0glyqa82wz-qt/install_qt.run "$@"
+        # '';
       in {
         packages.default = pkgs.stdenv.mkDerivation {
           inherit qt;
@@ -62,7 +66,6 @@
             unixtools.script
             libGL
             libz
-            qt_ld
           ];
 
           dontUnpack = true;
@@ -70,30 +73,50 @@
           configurePhase = ''
             cp $qt ./install_qt.run
             chmod +x ./install_qt.run
+
+            mkdir -p $out
+            cp ./install_qt.run $out/
+            ls -lah
           '';
 
           buildPhase = ''
-            export HOME=$(pwd)
-            mkdir -p $out
-            cp ./install_qt.run $out
             echo "Building qt"
+            export HOME=$(pwd)
+            # mkdir -p $out
+            # cp ./install_qt.run $out/
             mkdir cache
+            ls -lah
 
-            ./install_qt.run \
-            -l libGL.so.1 -l libz.so.1 \
-            install \
-            --cp cache \
-            --no-save-account \
-            --accept-messages \
-            --accept-licenses \
-            --accept-obligations \
-            --confirm-command \
-            --email <E-MAIL> \
-            --password <PASSWORD> \
-            --no-default-installations \
-            --no-force-installations \
-            --root ./Qt5 qt.qt5.51515.gcc_64
-                  
+            export NIX_LD_LIBRARY_PATH='${NIX_LD_LIBRARY_PATH}'${"\${NIX_LD_LIBRARY_PATH:+':'}$NIX_LD_LIBRARY_PATH"}
+            export NIX_LD="$(cat ${stdenv.cc}/nix-support/dynamic-linker)"
+
+            if [ -e ./install_qt.run ]; then
+              echo "install_qt.run exists"
+              ./install_qt.run
+            else
+              echo "install_qt.run does not exist"
+            fi
+
+            # nix-alien-ld ./install_qt.run \
+            # -l libGL.so.1 -l libz.so.1 \
+            # --recreate \
+            # --flake \
+            # --destination cache \
+            # -c i \
+            # install \
+            # --cp cache \
+            # --no-save-account \
+            # --accept-messages \
+            # --accept-licenses \
+            # --accept-obligations \
+            # --confirm-command \
+            # --email <E-MAIL> \
+            # --password <PASSWORD> \
+            # --no-default-installations \
+            # --no-force-installations \
+            # --root ./Qt5 qt.qt5.51515.gcc_64
+
+            cp -r cache $out/
             ls -lah
           '';
           dontInstall = true;
